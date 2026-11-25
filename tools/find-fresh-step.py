@@ -49,7 +49,7 @@ def candidates(catalog, root, include_negative=False):
         step_id = gap.get("id", "")
         if not ID.fullmatch(step_id):
             continue
-        if (gap.get("weight", 0) <= 1 or gap.get("pr_open", 0)
+        if (gap.get("reserved") or gap.get("weight", 0) <= 1 or gap.get("pr_open", 0)
                 or gap.get("reductions_live", 0) or not gap.get("sketch")
                 or not gap.get("statement")):
             continue

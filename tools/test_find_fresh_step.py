@@ -21,7 +21,7 @@ class FreshStepTests(unittest.TestCase):
             existing = root / "lean/PEqualNP/Outside/L_meta_99999.lean"
             existing.parent.mkdir(parents=True)
             existing.touch()
-            gaps = [self.gap(), self.gap(pr_open=1), self.gap(reductions_live=1),
+            gaps = [self.gap(), self.gap(pr_open=1), self.gap(reductions_live=1), self.gap(reserved=True),
                     dict(self.gap(), id="../../bad"),
                     dict(self.gap(), id="L-meta-99998", weight=1),
                     dict(self.gap(), id="L-meta-99997", statement="¬ True"),
