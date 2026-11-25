@@ -1,0 +1,49 @@
+name: Bootstrap public Lean definitions
+
+on:
+  push:
+    branches:
+      - codex/bootstrap-definitions-20261125
+
+permissions:
+  contents: read
+
+jobs:
+  definitions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      LEAN_NUM_THREADS: 2
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install the pinned Lean toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://github.com/leanprover/elan/releases/download/v4.4.0/elan-x86_64-unknown-linux-gnu.tar.gz -o /tmp/elan.tar.gz
+          mkdir /tmp/elan-install
+          tar -xzf /tmp/elan.tar.gz -C /tmp/elan-install
+          /tmp/elan-install/elan-init -y --no-modify-path --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Download the pinned Mathlib cache
+        working-directory: lean
+        run: lake exe cache get
+      - name: Build the public definitions
+        working-directory: lean
+        run: lake build PEqualNP.Defs
+      - name: Package the compiled definitions
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s\n' '084cfde2d88ca8fe376e53c392c01208d71e08eb' > source-commit.txt
+          git diff --exit-code 084cfde2d88ca8fe376e53c392c01208d71e08eb -- lean
+          tar -czf pequalnp-definitions.tar.gz -C lean .lake/build
+          sha256sum pequalnp-definitions.tar.gz > pequalnp-definitions.tar.gz.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: public-lean-definitions-084cfde2
+          path: |
+            pequalnp-definitions.tar.gz
+            pequalnp-definitions.tar.gz.sha256
+            source-commit.txt
+          retention-days: 3
