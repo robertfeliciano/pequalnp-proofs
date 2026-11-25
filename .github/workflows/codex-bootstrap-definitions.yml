@@ -16,6 +16,8 @@ jobs:
       LEAN_NUM_THREADS: 2
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 084cfde2d88ca8fe376e53c392c01208d71e08eb
       - name: Install the pinned Lean toolchain
         shell: bash
         run: |
