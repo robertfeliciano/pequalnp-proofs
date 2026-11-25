@@ -1,0 +1,54 @@
+name: Check assigned circuit investigation
+
+on:
+  push:
+    branches:
+      - codex/check-16932
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      LEAN_NUM_THREADS: 2
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install Lean manager
+        run: |
+          set -euo pipefail
+          curl -fsSL https://github.com/leanprover/elan/releases/download/v4.4.0/elan-x86_64-unknown-linux-gnu.tar.gz -o /tmp/elan.tar.gz
+          mkdir /tmp/elan-install
+          tar -xzf /tmp/elan.tar.gz -C /tmp/elan-install
+          /tmp/elan-install/elan-init -y --no-modify-path --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Fetch pinned Mathlib cache
+        working-directory: lean
+        run: lake exe cache get
+      - name: Build public definitions
+        working-directory: lean
+        run: lake build PEqualNP.Defs
+      - name: Prepare public step metadata
+        run: |
+          mkdir -p .pnp
+          printf '%s\n' '{"gap":{"file":"lean/PEqualNP/Outside/L_meta_16932.lean","module":"PEqualNP.Outside.L_meta_16932","imports":["PEqualNP.Defs"]}}' > .pnp/L-meta-16932.json
+      - name: Check contrary helper lemma
+        run: timeout 20m tools/pnp.sh check L-meta-16932 --allow-sorry
+      - name: Inspect helper axioms
+        working-directory: lean
+        run: |
+          set -euo pipefail
+          printf '%s\n' 'import PEqualNP.Outside.L_meta_16932' '#print axioms PEqualNP.Outside.L_meta_16932_aux.positive' | lake env lean --stdin | tee ../helper-axioms.log
+          python3 - <<'PY'
+          from pathlib import Path
+          text = Path('../helper-axioms.log').read_text()
+          assert 'sorryAx' not in text
+          assert 'depends on axioms' in text or 'does not depend on any axioms' in text
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: contrary-helper-16932
+          path: helper-axioms.log
+          retention-days: 3
