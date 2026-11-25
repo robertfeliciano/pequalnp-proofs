@@ -56,6 +56,26 @@ class FreshStepTests(unittest.TestCase):
         self.assertIsNone(reason)
         self.assertEqual(match["statement"], gap["statement"])
 
+    def test_recognizes_negated_twins(self):
+        catalog = {"gaps": [self.gap(), dict(self.gap(), id="L-meta-99998", statement=" ¬ (( True )) ")]}
+        self.assertEqual(finder.paired_ids(catalog)["L-meta-99999"], ["L-meta-99998"])
+        self.assertNotEqual(finder.claim_key("∀ x, ¬ P x"), finder.claim_key("∀ x, P x"))
+
+    def test_paired_pr_prevents_duplicate_work(self):
+        match, reason = finder.assess(self.gap(), lambda _: {"state": "open"},
+                                      lambda i: int(i == "L-meta-99998"),
+                                      related_ids=["L-meta-99998"])
+        self.assertIsNone(match)
+        self.assertEqual(reason, "paired_prior_pr")
+
+    def test_paired_holder_prevents_duplicate_work(self):
+        def response(url):
+            return {"state": "leased", "holders": 1} if url.endswith("99998") else {"state": "open"}
+        match, reason = finder.assess(self.gap(), response, lambda _: 0,
+                                      related_ids=["L-meta-99998"])
+        self.assertIsNone(match)
+        self.assertEqual(reason, "paired_unavailable")
+
     def test_incomplete_history_fails_closed(self):
         class Result:
             stdout = '{"total_count": 0, "incomplete_results": true}'
