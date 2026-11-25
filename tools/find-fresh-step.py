@@ -86,8 +86,10 @@ def candidates(catalog, root, include_negative=False):
                 or not gap.get("statement")):
             continue
         statement = gap["statement"].lstrip()
-        if not include_negative and (statement.startswith("¬")
-                                     or gap.get("title", "").startswith("False:")):
+        if not include_negative and (
+                statement.startswith("¬")
+                or gap.get("title", "").startswith(("False:", "No ", "It is false", "Counterexample"))
+                or "exact negation of another step" in gap.get("sketch", "")):
             continue
         # Derive the path from a validated identifier, never from remote text.
         filename = step_id.replace("-", "_") + ".lean"

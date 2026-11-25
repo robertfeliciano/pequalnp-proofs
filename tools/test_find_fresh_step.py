@@ -25,6 +25,7 @@ class FreshStepTests(unittest.TestCase):
                     dict(self.gap(), id="../../bad"),
                     dict(self.gap(), id="L-meta-99998", weight=1),
                     dict(self.gap(), id="L-meta-99997", statement="¬ True"),
+                    dict(self.gap(), id="L-meta-99995", statement="∃ x, Counterexample x", sketch="this is the exact negation of another step on this desk"),
                     dict(self.gap(), id="L-meta-99996")]
             self.assertEqual([g["id"] for g in finder.candidates({"gaps": gaps}, root)], ["L-meta-99996"])
 
