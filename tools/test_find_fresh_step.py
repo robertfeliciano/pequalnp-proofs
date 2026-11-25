@@ -31,7 +31,6 @@ class FreshStepTests(unittest.TestCase):
     def test_only_open_unheld_steps_reach_history_check(self):
         for response in ({"state": "leased", "holders": 1},
                          {"state": "open", "holders": 1},
-                         {"state": "open"},
                          {"state": "pr_open", "holders": 0},
                          {"state": "open", "holders": 0, "reason": "resting_after_expiry"}):
             with self.subTest(response=response):
@@ -40,6 +39,11 @@ class FreshStepTests(unittest.TestCase):
                 match, reason = finder.assess(self.gap(), lambda _: response, forbidden)
                 self.assertIsNone(match)
                 self.assertIsNotNone(reason)
+
+    def test_open_response_may_omit_holder_count(self):
+        match, reason = finder.assess(self.gap(), lambda _: {"state": "open"}, lambda _: 0)
+        self.assertIsNone(reason)
+        self.assertEqual(match["id"], "L-meta-99999")
 
     def test_all_prior_prs_exclude_candidate(self):
         match, reason = finder.assess(self.gap(), lambda _: {"state": "open", "holders": 0}, lambda _: 2)

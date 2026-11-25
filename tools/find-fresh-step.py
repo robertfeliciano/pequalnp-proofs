@@ -66,7 +66,7 @@ def candidates(catalog, root, include_negative=False):
 
 def assess(gap, get_step=get_json, count_prs=pr_count):
     step = get_step(DESK + gap["id"])
-    if step.get("state") != "open" or step.get("holders") != 0:
+    if step.get("state") != "open" or step.get("holders", 0) != 0:
         return None, "not_open_or_unheld"
     # Expired tasks may require an already completed proof before selection.
     if step.get("reason") == "resting_after_expiry":
